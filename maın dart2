@@ -1,0 +1,3805 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:io' show Platform;
+import 'dart:math';
+import 'dart:ui';
+
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:audioplayers/audioplayers.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:in_app_purchase/in_app_purchase.dart';
+
+// ──────────────────────────────────────────────────────────────────────────────
+// RENKLER VE STİLLER
+// ──────────────────────────────────────────────────────────────────────────────
+
+class AppColors {
+  static const bg1 = Color(0xFF0A0E1A);
+  static const bg2 = Color(0xFF111827);
+  static const surface = Color(0xFF1C2333);
+  static const surfaceAlt = Color(0xFF242E44);
+
+  static const gold = Color(0xFFFFD700);
+  static const goldLight = Color(0xFFFFE566);
+  static const goldDark = Color(0xFFB8960C);
+
+  static const accent = Color(0xFF6C63FF);
+  static const accentLight = Color(0xFF9D97FF);
+  static const accentGlow = Color(0x556C63FF);
+
+  static const success = Color(0xFF00E5A0);
+  static const successGlow = Color(0x5500E5A0);
+  static const error = Color(0xFFFF4D6A);
+  static const warning = Color(0xFFFF9500);
+
+  static const textPrimary = Color(0xFFF0F4FF);
+  static const textSecondary = Color(0xFF8892A4);
+  static const textMuted = Color(0xFF4A5568);
+
+  static const border = Color(0xFF2D3748);
+  static const borderBright = Color(0xFF4A5568);
+
+  // Izgara arka plan rengi - daha koyu, kontrast için
+  static const gridBg = Color(0xFF080C16);
+  static const gridCell = Color(0xFF0F1628);
+  static const gridCellBorder = Color(0xFF1E2A42);
+
+  static const wordColors = [
+    Color(0xFF6C63FF),
+    Color(0xFF00E5A0),
+    Color(0xFFFF6B6B),
+    Color(0xFFFFD700),
+    Color(0xFF4ECDC4),
+    Color(0xFFFF9500),
+    Color(0xFFAD62FF),
+    Color(0xFF00D2D3),
+    Color(0xFFFF6348),
+    Color(0xFF7BED9F),
+  ];
+}
+
+class AppTextStyles {
+  static const displayLarge = TextStyle(
+      fontFamily: 'Georgia',
+      fontSize: 42,
+      fontWeight: FontWeight.w900,
+      color: AppColors.textPrimary,
+      letterSpacing: 2,
+      height: 1.1);
+  static const displayMedium = TextStyle(
+      fontFamily: 'Georgia',
+      fontSize: 28,
+      fontWeight: FontWeight.w700,
+      color: AppColors.textPrimary,
+      letterSpacing: 1);
+  static const titleLarge = TextStyle(
+      fontSize: 20,
+      fontWeight: FontWeight.w700,
+      color: AppColors.textPrimary,
+      letterSpacing: 0.5);
+  static const bodyMedium = TextStyle(
+      fontSize: 15,
+      fontWeight: FontWeight.w500,
+      color: AppColors.textSecondary,
+      height: 1.5);
+  static const labelSmall = TextStyle(
+      fontSize: 11,
+      fontWeight: FontWeight.w600,
+      color: AppColors.textMuted,
+      letterSpacing: 1.2);
+  static const goldLabel = TextStyle(
+      fontSize: 22,
+      fontWeight: FontWeight.w800,
+      color: AppColors.gold,
+      letterSpacing: 0.5);
+  static const gridLetter = TextStyle(
+      fontWeight: FontWeight.w900,
+      color: AppColors.textPrimary,
+      letterSpacing: 0);
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// ÇEVİRİLER
+// ──────────────────────────────────────────────────────────────────────────────
+
+final Map<String, Map<String, String>> translations = {
+  'en': {
+    'title': 'WordWander',
+    'subtitle': 'Elite',
+    'tagline': 'Find every hidden word',
+    'desc': 'Easy → Hard  •  Hints  •  Daily Rewards',
+    'play': 'PLAY',
+    'lang': 'Language',
+    'by': 'by IsmailSimsekYazilim',
+    'coins': 'Coins',
+    'daily_reward': 'Daily Reward',
+    'premium': 'Store',
+    'loading': 'Loading...',
+    'level': 'Level',
+    'hint': 'Hint',
+    'tip': 'Tip',
+    'paused': 'PAUSED',
+    'resume': 'RESUME',
+    'main_menu': 'MENU',
+    'next_level': 'NEXT LEVEL',
+    'level_completed': 'LEVEL CLEAR!',
+    'time': 'Time',
+    'score': 'Score',
+    'hints_left': 'Hints',
+    'tips_left': 'Tips',
+    'buy_coins': 'Buy Coins',
+    'words_found': 'Words Found',
+    'best_time': 'Best Time',
+    'error_title': 'Error',
+    'error_asset': 'Word list could not be loaded.',
+    'game_completed': 'All levels complete!\nYou are a true WordWanderer!',
+    'loading_info': 'Crafting your puzzle...',
+    'tap_to_continue': 'Tap to continue',
+    'congratulations': 'Brilliant!',
+    'daily_claimed': 'Come back tomorrow!',
+    'daily_bonus': '+50 Coins!',
+    'words_remaining': 'remaining',
+    'settings': 'Settings',
+    'sound': 'Sound',
+    'music': 'Music',
+    'haptics': 'Haptics',
+  },
+  'tr': {
+    'title': 'WordWander',
+    'subtitle': 'Elite',
+    'tagline': 'Tüm gizli kelimeleri bul',
+    'desc': 'Kolaydan Zora  •  Joker  •  Günlük Ödül',
+    'play': 'OYNA',
+    'lang': 'Dil',
+    'by': 'by IsmailSimsekYazilim',
+    'coins': 'Coin',
+    'daily_reward': 'Günlük Ödül',
+    'premium': 'Mağaza',
+    'loading': 'Yükleniyor...',
+    'level': 'Seviye',
+    'hint': 'Joker',
+    'tip': 'İpucu',
+    'paused': 'DURAKLATILDI',
+    'resume': 'DEVAM ET',
+    'main_menu': 'MENÜ',
+    'next_level': 'SONRAKİ',
+    'level_completed': 'SEVİYE TAMAM!',
+    'time': 'Süre',
+    'score': 'Puan',
+    'hints_left': 'Joker',
+    'tips_left': 'İpucu',
+    'buy_coins': 'Coin Al',
+    'words_found': 'Bulunan',
+    'best_time': 'En İyi',
+    'error_title': 'Hata',
+    'error_asset': 'Kelime listesi yüklenemedi.',
+    'game_completed': 'Tüm seviyeler tamam!\nSen gerçek bir WordWanderer\'sın!',
+    'loading_info': 'Bulmaca hazırlanıyor...',
+    'tap_to_continue': 'Devam etmek için dokun',
+    'congratulations': 'Mükemmel!',
+    'daily_claimed': 'Yarın tekrar gel!',
+    'daily_bonus': '+50 Coin!',
+    'words_remaining': 'kaldı',
+    'settings': 'Ayarlar',
+    'sound': 'Ses',
+    'music': 'Müzik',
+    'haptics': 'Titreşim',
+  },
+};
+
+// ──────────────────────────────────────────────────────────────────────────────
+// AYARLAR
+// ──────────────────────────────────────────────────────────────────────────────
+
+class AppSettings {
+  static bool soundEnabled = true;
+  static bool musicEnabled = true;
+  static bool hapticsEnabled = true;
+
+  static Future<void> load() async {
+    final prefs = await SharedPreferences.getInstance();
+    soundEnabled = prefs.getBool('sound') ?? true;
+    musicEnabled = prefs.getBool('music') ?? true;
+    hapticsEnabled = prefs.getBool('haptics') ?? true;
+  }
+
+  static Future<void> save() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('sound', soundEnabled);
+    await prefs.setBool('music', musicEnabled);
+    await prefs.setBool('haptics', hapticsEnabled);
+  }
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// MAIN
+// ──────────────────────────────────────────────────────────────────────────────
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  MobileAds.instance.initialize();
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: []);
+  SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+  await AppSettings.load();
+  runApp(const WordSearchApp());
+}
+
+class WordSearchApp extends StatelessWidget {
+  const WordSearchApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'WordWander Elite',
+      theme: ThemeData.dark().copyWith(
+        scaffoldBackgroundColor: AppColors.bg1,
+        colorScheme: const ColorScheme.dark(
+            primary: AppColors.accent,
+            secondary: AppColors.gold,
+            surface: AppColors.surface),
+        appBarTheme: const AppBarTheme(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            scrolledUnderElevation: 0),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+            style: ElevatedButton.styleFrom(
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16)))),
+      ),
+      home: const SplashScreen(),
+    );
+  }
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// SPLASH SCREEN
+// ──────────────────────────────────────────────────────────────────────────────
+
+class SplashScreen extends StatefulWidget {
+  const SplashScreen({super.key});
+  @override
+  State<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<SplashScreen>
+    with TickerProviderStateMixin {
+  late AnimationController _logoCtrl;
+  late AnimationController _textCtrl;
+  late AnimationController _pulseCtrl;
+
+  late Animation<double> _logoScale;
+  late Animation<double> _logoOpacity;
+  late Animation<double> _textSlide;
+  late Animation<double> _textOpacity;
+  late Animation<double> _pulse;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _logoCtrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 900));
+    _textCtrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 700));
+    _pulseCtrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 1800))
+      ..repeat(reverse: true);
+
+    _logoScale = Tween(begin: 0.3, end: 1.0)
+        .animate(CurvedAnimation(parent: _logoCtrl, curve: Curves.elasticOut));
+    _logoOpacity = Tween(begin: 0.0, end: 1.0).animate(
+        CurvedAnimation(parent: _logoCtrl, curve: const Interval(0, 0.5)));
+    _textSlide = Tween(begin: 40.0, end: 0.0).animate(
+        CurvedAnimation(parent: _textCtrl, curve: Curves.easeOutCubic));
+    _textOpacity = Tween(begin: 0.0, end: 1.0)
+        .animate(CurvedAnimation(parent: _textCtrl, curve: Curves.easeOut));
+    _pulse = Tween(begin: 1.0, end: 1.15)
+        .animate(CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut));
+
+    Future.delayed(
+        const Duration(milliseconds: 300), () => _logoCtrl.forward());
+    Future.delayed(
+        const Duration(milliseconds: 800), () => _textCtrl.forward());
+    Future.delayed(const Duration(milliseconds: 2800), () {
+      if (mounted)
+        Navigator.pushReplacement(
+            context,
+            PageRouteBuilder(
+                transitionDuration: const Duration(milliseconds: 600),
+                pageBuilder: (_, __, ___) => const HomeScreen(),
+                transitionsBuilder: (_, anim, __, child) =>
+                    FadeTransition(opacity: anim, child: child)));
+    });
+  }
+
+  @override
+  void dispose() {
+    _logoCtrl.dispose();
+    _textCtrl.dispose();
+    _pulseCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.bg1,
+      body: Stack(
+        children: [
+          const StarfieldBackground(),
+          Positioned(
+              top: -100,
+              right: -100,
+              child: Container(
+                  width: 400,
+                  height: 400,
+                  decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(colors: [
+                        AppColors.accent.withOpacity(0.15),
+                        Colors.transparent
+                      ])))),
+          Positioned(
+              bottom: -80,
+              left: -80,
+              child: Container(
+                  width: 300,
+                  height: 300,
+                  decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(colors: [
+                        AppColors.gold.withOpacity(0.1),
+                        Colors.transparent
+                      ])))),
+          Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                AnimatedBuilder(
+                  animation: Listenable.merge([_logoCtrl, _pulseCtrl]),
+                  builder: (_, __) => Opacity(
+                    opacity: _logoOpacity.value,
+                    child: Transform.scale(
+                      scale: _logoScale.value,
+                      child: ScaleTransition(
+                        scale: _pulse,
+                        child: Container(
+                          width: 130,
+                          height: 130,
+                          decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: const LinearGradient(
+                                  colors: [AppColors.accent, AppColors.gold]),
+                              boxShadow: [
+                                BoxShadow(
+                                    color: AppColors.accent.withOpacity(0.5),
+                                    blurRadius: 40,
+                                    spreadRadius: 10),
+                                BoxShadow(
+                                    color: AppColors.gold.withOpacity(0.3),
+                                    blurRadius: 60,
+                                    spreadRadius: 5)
+                              ]),
+                          child: const Icon(Icons.text_fields_rounded,
+                              size: 60, color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 48),
+                AnimatedBuilder(
+                  animation: _textCtrl,
+                  builder: (_, __) => Opacity(
+                    opacity: _textOpacity.value,
+                    child: Transform.translate(
+                      offset: Offset(0, _textSlide.value),
+                      child: Column(
+                        children: [
+                          ShaderMask(
+                              shaderCallback: (bounds) => const LinearGradient(
+                                      colors: [
+                                        AppColors.textPrimary,
+                                        AppColors.gold
+                                      ]).createShader(bounds),
+                              child: const Text('WORDWANDER',
+                                  style: TextStyle(
+                                      fontFamily: 'Georgia',
+                                      fontSize: 38,
+                                      fontWeight: FontWeight.w900,
+                                      color: Colors.white,
+                                      letterSpacing: 6))),
+                          const SizedBox(height: 8),
+                          Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 20, vertical: 6),
+                              decoration: BoxDecoration(
+                                  gradient: const LinearGradient(colors: [
+                                    AppColors.gold,
+                                    AppColors.goldDark
+                                  ]),
+                                  borderRadius: BorderRadius.circular(30)),
+                              child: const Text('E L I T E',
+                                  style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w800,
+                                      color: AppColors.bg1,
+                                      letterSpacing: 5))),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 80),
+                AnimatedBuilder(
+                  animation: _pulseCtrl,
+                  builder: (_, __) => Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(3, (i) {
+                      final delay = i * 0.33;
+                      final val = (_pulseCtrl.value - delay).clamp(0.0, 1.0);
+                      return Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 5),
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color:
+                                  AppColors.gold.withOpacity(0.3 + val * 0.7)));
+                    }),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Positioned(
+              bottom: 40,
+              left: 0,
+              right: 0,
+              child: Text('by IsmailSimsekYazilim',
+                  textAlign: TextAlign.center,
+                  style: AppTextStyles.labelSmall
+                      .copyWith(color: AppColors.textMuted, letterSpacing: 2))),
+        ],
+      ),
+    );
+  }
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// STARFIELD BACKGROUND
+// ──────────────────────────────────────────────────────────────────────────────
+
+class StarfieldBackground extends StatefulWidget {
+  const StarfieldBackground({super.key});
+  @override
+  State<StarfieldBackground> createState() => _StarfieldBackgroundState();
+}
+
+class _StarfieldBackgroundState extends State<StarfieldBackground>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  final List<_Star> _stars = [];
+  final Random _rand = Random();
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl =
+        AnimationController(vsync: this, duration: const Duration(seconds: 8))
+          ..repeat();
+    for (int i = 0; i < 60; i++) {
+      _stars.add(_Star(
+          x: _rand.nextDouble(),
+          y: _rand.nextDouble(),
+          size: _rand.nextDouble() * 2.5 + 0.5,
+          speed: _rand.nextDouble() * 0.3 + 0.05,
+          opacity: _rand.nextDouble() * 0.6 + 0.2,
+          phase: _rand.nextDouble() * 2 * pi));
+    }
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+        animation: _ctrl,
+        builder: (_, __) => CustomPaint(
+            painter: _StarfieldPainter(_stars, _ctrl.value),
+            size: Size.infinite));
+  }
+}
+
+class _Star {
+  final double x, y, size, speed, opacity, phase;
+  _Star(
+      {required this.x,
+      required this.y,
+      required this.size,
+      required this.speed,
+      required this.opacity,
+      required this.phase});
+}
+
+class _StarfieldPainter extends CustomPainter {
+  final List<_Star> stars;
+  final double t;
+  _StarfieldPainter(this.stars, this.t);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    for (final s in stars) {
+      final flicker = (sin(t * 2 * pi * s.speed + s.phase) + 1) / 2;
+      final alpha = (s.opacity * (0.4 + 0.6 * flicker)).clamp(0.0, 1.0);
+      final paint = Paint()
+        ..color = AppColors.gold.withOpacity(alpha * 0.7)
+        ..style = PaintingStyle.fill;
+      canvas.drawCircle(
+          Offset(s.x * size.width, s.y * size.height), s.size, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_StarfieldPainter old) => true;
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// HOME SCREEN
+// ──────────────────────────────────────────────────────────────────────────────
+
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
+  String lang = 'en';
+  Map<String, String> t = {};
+  int coins = 0;
+  int level = 1;
+  int totalScore = 0;
+  bool adsRemoved = false;
+  bool _dailyAvailable = false;
+
+  late AnimationController _enterCtrl;
+  late AnimationController _floatCtrl;
+  List<Animation<double>> _itemAnims = [];
+
+  static const List<double> _animStarts = [0.0, 0.12, 0.24, 0.36, 0.48];
+  static const List<double> _animEnds = [0.50, 0.62, 0.74, 0.86, 1.0];
+
+  @override
+  void initState() {
+    super.initState();
+    t = translations[lang]!;
+
+    _enterCtrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 1200));
+    _floatCtrl =
+        AnimationController(vsync: this, duration: const Duration(seconds: 3))
+          ..repeat(reverse: true);
+
+    _itemAnims = List.generate(
+        5,
+        (i) => Tween<double>(begin: 0.0, end: 1.0).animate(CurvedAnimation(
+            parent: _enterCtrl,
+            curve: Interval(_animStarts[i], _animEnds[i],
+                curve: Curves.easeOutCubic))));
+
+    _enterCtrl.forward();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+
+    final lastReward = prefs.getString('last_daily_reward');
+    final today = DateTime.now().toIso8601String().substring(0, 10);
+
+    setState(() {
+      coins = prefs.getInt('coins') ?? 0;
+      level = prefs.getInt('level') ?? 1;
+      totalScore = prefs.getInt('score') ?? 0;
+      adsRemoved = prefs.getBool('ads_removed') ?? false;
+      _dailyAvailable = lastReward != today;
+    });
+  }
+
+  Future<void> _claimDailyReward() async {
+    if (!_dailyAvailable) {
+      _showToast(t['daily_claimed']!);
+      return;
+    }
+    final prefs = await SharedPreferences.getInstance();
+    final today = DateTime.now().toIso8601String().substring(0, 10);
+    setState(() {
+      coins += 50;
+      _dailyAvailable = false;
+    });
+    await prefs.setInt('coins', coins);
+    await prefs.setString('last_daily_reward', today);
+    if (mounted) _showDailyRewardDialog();
+  }
+
+  void _showDailyRewardDialog() {
+    showDialog(
+        context: context,
+        barrierColor: Colors.black.withOpacity(0.7),
+        builder: (_) => _DailyRewardDialog(t: t));
+  }
+
+  void _showToast(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content:
+            Text(msg, style: const TextStyle(color: AppColors.textPrimary)),
+        backgroundColor: AppColors.surface,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        margin: const EdgeInsets.all(20),
+        duration: const Duration(seconds: 2)));
+  }
+
+  void _changeLanguage(String newLang) {
+    setState(() {
+      lang = newLang;
+      t = translations[newLang]!;
+    });
+  }
+
+  @override
+  void dispose() {
+    _enterCtrl.dispose();
+    _floatCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+
+    return Scaffold(
+      backgroundColor: AppColors.bg1,
+      body: Stack(
+        children: [
+          const StarfieldBackground(),
+          Positioned(
+              top: -150,
+              right: -100,
+              child: Container(
+                  width: 350,
+                  height: 350,
+                  decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(colors: [
+                        AppColors.accent.withOpacity(0.2),
+                        Colors.transparent
+                      ])))),
+          Positioned(
+              bottom: -100,
+              left: -80,
+              child: Container(
+                  width: 280,
+                  height: 280,
+                  decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(colors: [
+                        AppColors.gold.withOpacity(0.12),
+                        Colors.transparent
+                      ])))),
+          SafeArea(
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Column(
+                  children: [
+                    const SizedBox(height: 20),
+                    _FadeSlide(
+                        animation: _itemAnims[0],
+                        child: Row(children: [
+                          _LanguageToggle(
+                              lang: lang, onChange: _changeLanguage),
+                          const Spacer(),
+                          GestureDetector(
+                              onTap: () => _openStore(),
+                              child: CoinBadge(coins: coins)),
+                          const SizedBox(width: 12),
+                          _IconCircleButton(
+                              icon: Icons.settings_outlined,
+                              onTap: () => _openSettings())
+                        ])),
+                    const SizedBox(height: 40),
+                    _FadeSlide(
+                      animation: _itemAnims[1],
+                      child: AnimatedBuilder(
+                        animation: _floatCtrl,
+                        builder: (_, child) => Transform.translate(
+                            offset: Offset(0, sin(_floatCtrl.value * pi) * 8),
+                            child: child),
+                        child: Column(
+                          children: [
+                            Container(
+                                width: 110,
+                                height: 110,
+                                decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    gradient: const LinearGradient(colors: [
+                                      AppColors.accent,
+                                      AppColors.gold
+                                    ]),
+                                    boxShadow: [
+                                      BoxShadow(
+                                          color:
+                                              AppColors.accent.withOpacity(0.5),
+                                          blurRadius: 40,
+                                          spreadRadius: 8),
+                                      BoxShadow(
+                                          color:
+                                              AppColors.gold.withOpacity(0.25),
+                                          blurRadius: 60)
+                                    ]),
+                                child: const Icon(Icons.text_fields_rounded,
+                                    size: 52, color: Colors.white)),
+                            const SizedBox(height: 24),
+                            ShaderMask(
+                                shaderCallback: (b) => const LinearGradient(
+                                        colors: [
+                                          AppColors.textPrimary,
+                                          AppColors.gold
+                                        ]).createShader(b),
+                                child: const Text('WORDWANDER',
+                                    style: TextStyle(
+                                        fontFamily: 'Georgia',
+                                        fontSize: 34,
+                                        fontWeight: FontWeight.w900,
+                                        color: Colors.white,
+                                        letterSpacing: 5))),
+                            const SizedBox(height: 6),
+                            Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 5),
+                                decoration: BoxDecoration(
+                                    gradient: const LinearGradient(colors: [
+                                      AppColors.gold,
+                                      AppColors.goldDark
+                                    ]),
+                                    borderRadius: BorderRadius.circular(30)),
+                                child: const Text('E L I T E',
+                                    style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w800,
+                                        color: AppColors.bg1,
+                                        letterSpacing: 5))),
+                            const SizedBox(height: 10),
+                            Text(t['tagline']!,
+                                style: AppTextStyles.bodyMedium),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 36),
+                    _FadeSlide(
+                        animation: _itemAnims[2],
+                        child: Row(children: [
+                          Expanded(
+                              child: _StatCard(
+                                  label: t['level']!,
+                                  value: '$level',
+                                  icon: Icons.layers_rounded,
+                                  color: AppColors.accent)),
+                          const SizedBox(width: 12),
+                          Expanded(
+                              child: _StatCard(
+                                  label: t['score']!,
+                                  value: _formatScore(totalScore),
+                                  icon: Icons.stars_rounded,
+                                  color: AppColors.gold)),
+                          const SizedBox(width: 12),
+                          Expanded(
+                              child: GestureDetector(
+                                  onTap: _claimDailyReward,
+                                  child: _StatCard(
+                                      label: t['daily_reward']!,
+                                      value: _dailyAvailable ? '🎁' : '✓',
+                                      icon: _dailyAvailable
+                                          ? Icons.card_giftcard_rounded
+                                          : Icons.check_circle_rounded,
+                                      color: _dailyAvailable
+                                          ? AppColors.success
+                                          : AppColors.textMuted,
+                                      isClickable: _dailyAvailable)))
+                        ])),
+                    const SizedBox(height: 32),
+                    _FadeSlide(
+                        animation: _itemAnims[3],
+                        child: GoldButton(
+                            label: t['play']!,
+                            icon: Icons.play_arrow_rounded,
+                            width: size.width,
+                            height: 68,
+                            fontSize: 22,
+                            onTap: () => Navigator.push(
+                                context,
+                                PageRouteBuilder(
+                                    transitionDuration:
+                                        const Duration(milliseconds: 500),
+                                    pageBuilder: (_, __, ___) => GameScreen(
+                                        lang: lang, adsRemoved: adsRemoved),
+                                    transitionsBuilder: (_, anim, __, child) => FadeTransition(
+                                        opacity: anim,
+                                        child: SlideTransition(
+                                            position: Tween<Offset>(
+                                                    begin: const Offset(0, 0.1),
+                                                    end: Offset.zero)
+                                                .animate(CurvedAnimation(
+                                                    parent: anim,
+                                                    curve: Curves.easeOutCubic)),
+                                            child: child)))).then((_) => _loadData()))),
+                    const SizedBox(height: 16),
+                    _FadeSlide(
+                      animation: _itemAnims[4],
+                      child: GestureDetector(
+                        onTap: () => _openStore(),
+                        child: GlassCard(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 24, vertical: 18),
+                          borderColor: AppColors.gold.withOpacity(0.3),
+                          child: Row(
+                            children: [
+                              Container(
+                                  padding: const EdgeInsets.all(10),
+                                  decoration: BoxDecoration(
+                                      color: AppColors.gold.withOpacity(0.15),
+                                      borderRadius: BorderRadius.circular(12)),
+                                  child: const Icon(Icons.storefront_rounded,
+                                      color: AppColors.gold, size: 22)),
+                              const SizedBox(width: 16),
+                              Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(t['premium']!,
+                                        style: AppTextStyles.titleLarge),
+                                    Text('Coins & Remove Ads',
+                                        style: AppTextStyles.bodyMedium
+                                            .copyWith(fontSize: 13))
+                                  ]),
+                              const Spacer(),
+                              const Icon(Icons.chevron_right_rounded,
+                                  color: AppColors.textMuted),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 40),
+                    Text(t['by']!.toUpperCase(),
+                        style: AppTextStyles.labelSmall),
+                    const SizedBox(height: 30),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatScore(int s) =>
+      s >= 1000 ? '${(s / 1000).toStringAsFixed(1)}k' : '$s';
+
+  void _openStore() {
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (_) => PremiumScreen(
+                lang: lang,
+                onPurchase: (addedCoins, removeAds) async {
+                  final prefs = await SharedPreferences.getInstance();
+                  setState(() {
+                    coins += addedCoins;
+                    if (removeAds) adsRemoved = true;
+                  });
+                  await prefs.setInt('coins', coins);
+                  if (removeAds) await prefs.setBool('ads_removed', true);
+                }))).then((_) => _loadData());
+  }
+
+  void _openSettings() {
+    showModalBottomSheet(
+        context: context,
+        backgroundColor: Colors.transparent,
+        builder: (_) => _SettingsSheet(t: t));
+  }
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// GAME SCREEN — GİRİŞ + IZGARA İYİLEŞTİRMELERİ
+// ──────────────────────────────────────────────────────────────────────────────
+
+class GameScreen extends StatefulWidget {
+  final String lang;
+  final bool adsRemoved;
+
+  const GameScreen({super.key, required this.lang, required this.adsRemoved});
+
+  @override
+  State<GameScreen> createState() => _GameScreenState();
+}
+
+class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
+  List<List<String>> grid = [];
+  List<String> words = [];
+  List<String> foundWords = [];
+  int gridSize = 0;
+  final Random rand = Random();
+
+  int jokers = 1;
+  int tipJokers = 3;
+  int coins = 0;
+  int score = 0;
+  int seconds = 0;
+  int totalSeconds = 0;
+  int level = 1;
+  bool isPaused = false;
+  bool _winDialogShown = false;
+  bool _isLoading = true;
+  late bool _adsRemoved;
+
+  static const int maxSupportedLevel = 100;
+
+  List<Map<String, dynamic>> drawnPaths = [];
+  Set<String> pulsingWords = {};
+  int? _dragStartRow, _dragStartCol, _dragEndRow, _dragEndCol;
+
+  late AnimationController _pulseCtrl;
+  late AnimationController _successCtrl;
+  late Animation<double> _successScale;
+
+  // Izgara giriş animasyonu
+  late AnimationController _gridEnterCtrl;
+  late Animation<double> _gridEnterAnim;
+
+  String? _lastFoundWord;
+  Timer? _gameTimer;
+  Map<String, String> t = {};
+
+  BannerAd? _bannerAd;
+  bool _isBannerLoaded = false;
+  InterstitialAd? _interstitialAd;
+
+  final AudioPlayer _sfxPlayer = AudioPlayer();
+  final AudioPlayer _musicPlayer = AudioPlayer();
+  bool _isMusicPlaying = false;
+
+  final List<String> _backgrounds = [
+    'assets/game_bg.jpg',
+    'assets/game_bg1.jpg',
+    'assets/game_bg2.jpg',
+    'assets/game_bg3.jpg',
+    'assets/game_bg4.jpg',
+    'assets/game_bg5.jpg',
+  ];
+
+  String get _currentBg => _backgrounds[(level - 1) % _backgrounds.length];
+
+  // ── KOLAY'DAN ZORA: Level bazlı ızgara boyutu ──────────────────────────────
+  // Level  1-3  → 8×8   (çok kolay, geniş hücreler, net okuma)
+  // Level  4-6  → 10×10 (orta-kolay)
+  // Level  7-10 → 12×12 (orta)
+  // Level 11-15 → 13×13 (orta-zor)
+  // Level 16-20 → 14×14 (zor)
+  // Level 21+   → 15×15 (çok zor)
+  int _gridSizeForLevel(int lv) {
+    if (lv <= 3) return 8;
+    if (lv <= 6) return 10;
+    if (lv <= 10) return 12;
+    if (lv <= 15) return 13;
+    if (lv <= 20) return 14;
+    return 15;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    t = translations[widget.lang] ?? translations['en']!;
+
+    _pulseCtrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 700))
+      ..repeat(reverse: true);
+    _successCtrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 500));
+    _successScale = Tween(begin: 0.5, end: 1.0).animate(
+        CurvedAnimation(parent: _successCtrl, curve: Curves.elasticOut));
+
+    _gridEnterCtrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 600));
+    _gridEnterAnim =
+        CurvedAnimation(parent: _gridEnterCtrl, curve: Curves.easeOutCubic);
+
+    _adsRemoved = widget.adsRemoved;
+
+    _loadCoins();
+    _loadSavedData();
+    _loadAdsRemovedStatus();
+
+    if (AppSettings.musicEnabled) _startMusic();
+  }
+
+  Future<void> _loadAdsRemovedStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedRemoved = prefs.getBool('ads_removed') ?? false;
+
+    if (savedRemoved != _adsRemoved) {
+      setState(() => _adsRemoved = savedRemoved);
+    }
+
+    if (!_adsRemoved) {
+      _loadBannerAd();
+      _loadInterstitialAd();
+    } else {
+      _bannerAd?.dispose();
+      _bannerAd = null;
+      _isBannerLoaded = false;
+      _interstitialAd?.dispose();
+      _interstitialAd = null;
+    }
+  }
+
+  Future<void> _loadCoins() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    setState(() => coins = prefs.getInt('coins') ?? 0);
+  }
+
+  Future<void> _startMusic() async {
+    if (_isMusicPlaying) return;
+    try {
+      await _musicPlayer.setReleaseMode(ReleaseMode.loop);
+      await _musicPlayer.setVolume(0.2);
+      await _musicPlayer.play(AssetSource('background_music.mp3'));
+      _isMusicPlaying = true;
+    } catch (_) {}
+  }
+
+  Future<void> _playSfx(String file) async {
+    if (!AppSettings.soundEnabled) return;
+    try {
+      await _sfxPlayer.play(AssetSource(file));
+    } catch (_) {}
+  }
+
+  void _haptic({bool heavy = false}) {
+    if (!AppSettings.hapticsEnabled) return;
+    if (heavy)
+      HapticFeedback.heavyImpact();
+    else
+      HapticFeedback.lightImpact();
+  }
+
+  void _loadBannerAd() {
+    _bannerAd = BannerAd(
+      adUnitId: Platform.isAndroid
+          ? 'ca-app-pub-6551908952762916/3434056237'
+          : 'ca-app-pub-6551908952762916/3434056237',
+      size: AdSize.banner,
+      request: const AdRequest(),
+      listener: BannerAdListener(
+        onAdLoaded: (_) {
+          if (mounted) setState(() => _isBannerLoaded = true);
+        },
+        onAdFailedToLoad: (ad, _) => ad.dispose(),
+      ),
+    )..load();
+  }
+
+  void _loadInterstitialAd() {
+    InterstitialAd.load(
+      adUnitId: Platform.isAndroid
+          ? 'ca-app-pub-6551908952762916/3552533784'
+          : 'ca-app-pub-6551908952762916/3552533784',
+      request: const AdRequest(),
+      adLoadCallback: InterstitialAdLoadCallback(
+        onAdLoaded: (ad) => _interstitialAd = ad,
+        onAdFailedToLoad: (_) => _interstitialAd = null,
+      ),
+    );
+  }
+
+  Future<void> _loadSavedData() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    setState(() {
+      level = prefs.getInt('level') ?? 1;
+      score = prefs.getInt('score') ?? 0;
+      tipJokers = prefs.getInt('tipJokers') ?? 3;
+      totalSeconds = prefs.getInt('totalSeconds') ?? 0;
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadWordsAndStart());
+  }
+
+  Future<void> _saveData() async {
+    if (!mounted) return;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('level', level);
+    await prefs.setInt('score', score);
+    await prefs.setInt('tipJokers', tipJokers);
+    await prefs.setInt('totalSeconds', totalSeconds + seconds);
+  }
+
+  Future<void> _saveCoins() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('coins', coins);
+  }
+
+  @override
+  void dispose() {
+    _gameTimer?.cancel();
+    _pulseCtrl.dispose();
+    _successCtrl.dispose();
+    _gridEnterCtrl.dispose();
+    _sfxPlayer.dispose();
+    _musicPlayer.dispose();
+    _bannerAd?.dispose();
+    _interstitialAd?.dispose();
+    _saveData();
+    super.dispose();
+  }
+
+  Future<void> _loadWordsAndStart() async {
+    setState(() => _isLoading = true);
+    final fileName = widget.lang == 'tr' ? 'words_tr.json' : 'words_en.json';
+    try {
+      final jsonStr =
+          await DefaultAssetBundle.of(context).loadString('assets/$fileName');
+      final json = jsonDecode(jsonStr) as Map<String, dynamic>;
+      final key = level.toString();
+
+      if (!json.containsKey(key) || json[key] == null) {
+        _showErrorDialog('Level $level not found');
+        return;
+      }
+
+      words = (json[key] as List)
+          .map((e) => e.toString().trim().toUpperCase())
+          .where((e) => e.isNotEmpty)
+          .toSet()
+          .toList();
+
+      // Kolaydan zora: kelimeler uzunluğa göre sırala (kısadan uzuna)
+      words.sort((a, b) => a.length.compareTo(b.length));
+
+      gridSize = _gridSizeForLevel(level);
+
+      _newGame();
+    } catch (e) {
+      _showErrorDialog('$fileName could not be loaded.');
+    }
+  }
+
+  void _newGame() {
+    if (!mounted) return;
+    _winDialogShown = false;
+    foundWords.clear();
+    drawnPaths.clear();
+    pulsingWords.clear();
+    seconds = 0;
+    jokers = 1;
+    isPaused = false;
+    _isLoading = false;
+
+    grid = List.generate(gridSize, (_) => List.filled(gridSize, ''));
+
+    final letters = widget.lang == 'tr'
+        ? 'ABCÇDEFGĞHİJKLMNOÖPRSŞTUÜVYZ'
+        : 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+    const deltas = [
+      [0, 1],
+      [1, 0],
+      [1, 1],
+      [1, -1],
+      [0, -1],
+      [-1, 0],
+      [-1, -1],
+      [-1, 1]
+    ];
+
+    // Kelimeleri uzundan kısaya yerleştir (uzun kelimeler önce, daha kolay yerleşir)
+    final toPlace = List<String>.from(words)
+      ..sort((a, b) => b.length.compareTo(a.length));
+
+    for (final w in toPlace) {
+      bool placed = false;
+      int tries = 0;
+      while (!placed && tries < 30000) {
+        final dir = rand.nextInt(8);
+        final d = deltas[dir];
+        final dr = d[0], dc = d[1];
+
+        int rMin = 0, rMax = gridSize - 1;
+        int cMin = 0, cMax = gridSize - 1;
+        if (dr > 0)
+          rMax = gridSize - (w.length - 1);
+        else if (dr < 0) rMin = w.length - 1;
+        if (dc > 0)
+          cMax = gridSize - (w.length - 1);
+        else if (dc < 0) cMin = w.length - 1;
+
+        if (rMax < rMin || cMax < cMin) {
+          tries++;
+          continue;
+        }
+
+        final r = rMin + rand.nextInt(rMax - rMin + 1);
+        final c = cMin + rand.nextInt(cMax - cMin + 1);
+
+        if (_canPlace(w, r, c, dr, dc)) {
+          _place(w, r, c, dr, dc);
+          placed = true;
+        }
+        tries++;
+      }
+    }
+
+    for (int i = 0; i < gridSize; i++) {
+      for (int j = 0; j < gridSize; j++) {
+        if (grid[i][j].isEmpty)
+          grid[i][j] = letters[rand.nextInt(letters.length)];
+      }
+    }
+
+    // Izgara giriş animasyonu
+    _gridEnterCtrl.forward(from: 0);
+
+    setState(() {});
+    _startTimer();
+  }
+
+  void _startTimer() {
+    _gameTimer?.cancel();
+    _gameTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      if (isPaused || foundWords.length >= words.length) return;
+      setState(() {
+        seconds++;
+        totalSeconds++;
+      });
+    });
+  }
+
+  bool _canPlace(String w, int r, int c, int dr, int dc) {
+    for (int i = 0; i < w.length; i++) {
+      final nr = r + i * dr, nc = c + i * dc;
+      if (nr < 0 || nr >= gridSize || nc < 0 || nc >= gridSize) return false;
+      if (grid[nr][nc].isNotEmpty && grid[nr][nc] != w[i]) return false;
+    }
+    return true;
+  }
+
+  void _place(String w, int r, int c, int dr, int dc) {
+    for (int i = 0; i < w.length; i++) {
+      grid[r + i * dr][c + i * dc] = w[i];
+    }
+  }
+
+  void _onPanStart(DragStartDetails d, double cs) {
+    if (isPaused) return;
+    final r = (d.localPosition.dy / cs).floor();
+    final c = (d.localPosition.dx / cs).floor();
+    if (!_inBounds(r, c)) return;
+    setState(() {
+      _dragStartRow = r;
+      _dragStartCol = c;
+      _dragEndRow = r;
+      _dragEndCol = c;
+    });
+  }
+
+  void _onPanUpdate(DragUpdateDetails d, double cs) {
+    if (isPaused || _dragStartRow == null) return;
+    final r = (d.localPosition.dy / cs).floor().clamp(0, gridSize - 1);
+    final c = (d.localPosition.dx / cs).floor().clamp(0, gridSize - 1);
+    if (r != _dragEndRow || c != _dragEndCol) {
+      setState(() {
+        _dragEndRow = r;
+        _dragEndCol = c;
+      });
+    }
+  }
+
+  void _onPanEnd(DragEndDetails _) async {
+    if (_dragStartRow == null || _dragEndRow == null) {
+      _clearDrag();
+      return;
+    }
+    final cells = _cellsInLine(
+        _dragStartRow!, _dragStartCol!, _dragEndRow!, _dragEndCol!);
+    final word = _wordFromCells(cells);
+
+    if (word.isNotEmpty && words.contains(word) && !foundWords.contains(word)) {
+      _haptic();
+      final colorIdx = foundWords.length % AppColors.wordColors.length;
+      setState(() {
+        foundWords.add(word);
+        drawnPaths.add({
+          'word': word,
+          'color': AppColors.wordColors[colorIdx],
+          'cells': cells
+        });
+        pulsingWords.add(word);
+        _lastFoundWord = word;
+        score += 150;
+      });
+
+      _successCtrl.forward(from: 0);
+      await _saveData();
+      _playSfx('click.mp3');
+
+      Future.delayed(const Duration(milliseconds: 1200), () {
+        if (mounted)
+          setState(() {
+            pulsingWords.remove(word);
+            _lastFoundWord = null;
+          });
+      });
+
+      if (foundWords.length == words.length) {
+        Future.delayed(const Duration(milliseconds: 700), _showWinDialog);
+      }
+    }
+    _clearDrag();
+  }
+
+  void _clearDrag() {
+    setState(() {
+      _dragStartRow = _dragStartCol = _dragEndRow = _dragEndCol = null;
+    });
+  }
+
+  bool _inBounds(int r, int c) =>
+      r >= 0 && r < gridSize && c >= 0 && c < gridSize;
+
+  List<Offset> _cellsInLine(int r1, int c1, int r2, int c2) {
+    final dr = (r2 - r1).sign, dc = (c2 - c1).sign;
+    if (dr == 0 && dc == 0) return [Offset(c1.toDouble(), r1.toDouble())];
+    if (dr != 0 && dc != 0 && (r2 - r1).abs() != (c2 - c1).abs()) return [];
+    final steps = max((r2 - r1).abs(), (c2 - c1).abs());
+    return List.generate(steps + 1,
+        (i) => Offset((c1 + i * dc).toDouble(), (r1 + i * dr).toDouble()));
+  }
+
+  String _wordFromCells(List<Offset> cells) {
+    if (cells.isEmpty) return '';
+    for (final o in cells) {
+      if (!_inBounds(o.dy.toInt(), o.dx.toInt())) return '';
+    }
+    final fwd = cells.map((o) => grid[o.dy.toInt()][o.dx.toInt()]).join();
+    final bwd = fwd.split('').reversed.join();
+    if (words.contains(fwd)) return fwd;
+    if (words.contains(bwd)) return bwd;
+    return '';
+  }
+
+  void _buyOrUseJoker() {
+    if (jokers > 0) {
+      _useJoker();
+      return;
+    }
+    if (coins >= 50) {
+      _showBuyConfirm(
+          label: t['hint']!,
+          icon: Icons.auto_awesome_rounded,
+          color: AppColors.warning,
+          onConfirm: () {
+            setState(() {
+              coins -= 50;
+              jokers = 1;
+            });
+            _saveCoins();
+            _saveData();
+            _showToast('✨ ${t['hint']!} satın alındı!');
+            _useJoker();
+          });
+    } else {
+      _openStore();
+    }
+  }
+
+  void _useJoker() async {
+    if (foundWords.length >= words.length) return;
+    final remaining = words.where((w) => !foundWords.contains(w)).toList();
+    if (remaining.isEmpty) return;
+    final word = remaining[rand.nextInt(remaining.length)];
+
+    const deltas = [
+      [0, 1],
+      [1, 0],
+      [1, 1],
+      [1, -1],
+      [0, -1],
+      [-1, 0],
+      [-1, -1],
+      [-1, 1]
+    ];
+
+    for (int r = 0; r < gridSize; r++) {
+      for (int c = 0; c < gridSize; c++) {
+        for (int d = 0; d < 8; d++) {
+          final dr = deltas[d][0], dc = deltas[d][1];
+          if (_checkDir(word, r, c, dr, dc)) {
+            final cells = List.generate(
+                word.length,
+                (k) =>
+                    Offset((c + k * dc).toDouble(), (r + k * dr).toDouble()));
+            if (!mounted) return;
+            setState(() {
+              foundWords.add(word);
+              drawnPaths.add({
+                'word': word,
+                'color': AppColors.wordColors[
+                    foundWords.length % AppColors.wordColors.length],
+                'cells': cells
+              });
+              pulsingWords.add(word);
+              jokers--;
+              score += 100;
+            });
+            await _saveData();
+            _haptic(heavy: true);
+            _playSfx('click.mp3');
+            Future.delayed(const Duration(milliseconds: 1200), () {
+              if (mounted) setState(() => pulsingWords.remove(word));
+            });
+            if (foundWords.length == words.length)
+              Future.delayed(const Duration(milliseconds: 700), _showWinDialog);
+            return;
+          }
+        }
+      }
+    }
+  }
+
+  void _buyOrUseTip() {
+    if (tipJokers > 0) {
+      _useTip();
+      return;
+    }
+    if (coins >= 50) {
+      _showBuyConfirm(
+          label: t['tip']!,
+          icon: Icons.lightbulb_rounded,
+          color: AppColors.accentLight,
+          onConfirm: () {
+            setState(() {
+              coins -= 50;
+              tipJokers = 1;
+            });
+            _saveCoins();
+            _saveData();
+            _showToast('💡 ${t['tip']!} satın alındı!');
+            _useTip();
+          });
+    } else {
+      _openStore();
+    }
+  }
+
+  void _showBuyConfirm(
+      {required String label,
+      required IconData icon,
+      required Color color,
+      required VoidCallback onConfirm}) {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black.withOpacity(0.6),
+      builder: (_) => Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 48),
+          child: GlassCard(
+            padding: const EdgeInsets.all(24),
+            borderColor: color.withOpacity(0.5),
+            shadows: [BoxShadow(color: color.withOpacity(0.2), blurRadius: 30)],
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, color: color, size: 40),
+                const SizedBox(height: 12),
+                Text(label, style: AppTextStyles.titleLarge),
+                const SizedBox(height: 8),
+                Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                  const Icon(Icons.monetization_on_rounded,
+                      color: AppColors.gold, size: 18),
+                  const SizedBox(width: 6),
+                  const Text('50 coin',
+                      style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.gold))
+                ]),
+                const SizedBox(height: 4),
+                Text('Bakiye: $coins coin',
+                    style: AppTextStyles.bodyMedium.copyWith(fontSize: 13)),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Expanded(
+                        child: GestureDetector(
+                            onTap: () => Navigator.pop(context),
+                            child: Container(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 12),
+                                decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(12),
+                                    border:
+                                        Border.all(color: AppColors.border)),
+                                child: const Text('İptal',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                        color: AppColors.textSecondary,
+                                        fontWeight: FontWeight.w700))))),
+                    const SizedBox(width: 12),
+                    Expanded(
+                        child: GestureDetector(
+                            onTap: () {
+                              Navigator.pop(context);
+                              onConfirm();
+                            },
+                            child: Container(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 12),
+                                decoration: BoxDecoration(
+                                    color: color,
+                                    borderRadius: BorderRadius.circular(12)),
+                                child: const Text('Al',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w900,
+                                        fontSize: 15))))),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _useTip() {
+    if (foundWords.length >= words.length) return;
+    final remaining = words.where((w) => !foundWords.contains(w)).toList();
+    if (remaining.isEmpty) return;
+    final word = remaining[rand.nextInt(remaining.length)];
+    setState(() => tipJokers--);
+    _saveData();
+    _showTipOverlay(word);
+  }
+
+  void _showTipOverlay(String word) {
+    final tip = word.length > 2
+        ? '${word[0]}${'_' * (word.length - 2)}${word[word.length - 1]}'
+        : word[0];
+    showDialog(
+        context: context,
+        barrierColor: Colors.transparent,
+        builder: (_) => _TipOverlay(tip: tip, word: word));
+  }
+
+  bool _checkDir(String w, int r, int c, int dr, int dc) {
+    for (int i = 0; i < w.length; i++) {
+      final nr = r + i * dr, nc = c + i * dc;
+      if (!_inBounds(nr, nc)) return false;
+      if (grid[nr][nc] != w[i]) return false;
+    }
+    return true;
+  }
+
+  void _openStore() {
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (_) => PremiumScreen(
+                lang: widget.lang,
+                onPurchase: (addedCoins, removeAds) {
+                  setState(() {
+                    coins += addedCoins;
+                    if (removeAds) {
+                      _adsRemoved = true;
+                      _bannerAd?.dispose();
+                      _bannerAd = null;
+                      _isBannerLoaded = false;
+                      _interstitialAd?.dispose();
+                      _interstitialAd = null;
+                    }
+                  });
+                  _saveCoins();
+                  if (removeAds && mounted)
+                    _showToast('🎉 Reklamlar kaldırıldı! Teşekkürler!');
+                }))).then((_) async {
+      await _loadAdsRemovedStatus();
+      await _loadCoins();
+      if (mounted) setState(() {});
+    });
+  }
+
+  void _showErrorDialog(String msg) {
+    if (!mounted) return;
+    showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => _ErrorDialog(
+            message: msg,
+            onMenu: () => Navigator.popUntil(context, (r) => r.isFirst)));
+  }
+
+  void _showPauseMenu() {
+    setState(() => isPaused = true);
+    showDialog(
+        context: context,
+        barrierDismissible: false,
+        barrierColor: Colors.black.withOpacity(0.7),
+        builder: (_) => _PauseDialog(
+            t: t,
+            onResume: () {
+              Navigator.pop(context);
+              setState(() => isPaused = false);
+            },
+            onMenu: () {
+              _gameTimer?.cancel();
+              Navigator.popUntil(context, (r) => r.isFirst);
+            },
+            onRestart: () {
+              Navigator.pop(context);
+              setState(() {
+                isPaused = false;
+              });
+              _newGame();
+            }));
+  }
+
+  void _showWinDialog() async {
+    if (!mounted || _winDialogShown) return;
+    _winDialogShown = true;
+    _gameTimer?.cancel();
+    _haptic(heavy: true);
+    await _saveData();
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      barrierColor: Colors.black.withOpacity(0.75),
+      builder: (_) => _WinDialog(
+        t: t,
+        level: level,
+        seconds: seconds,
+        score: score,
+        wordsFound: foundWords.length,
+        totalWords: words.length,
+        canGoNext: level < maxSupportedLevel,
+        onMenu: () {
+          Navigator.popUntil(context, (r) => r.isFirst);
+          if (level % 2 == 0 && !_adsRemoved) _showInterstitial();
+        },
+        onNext: () {
+          Navigator.pop(context);
+          if (level % 2 == 0 && !_adsRemoved)
+            Future.delayed(
+                const Duration(milliseconds: 300), _showInterstitial);
+          if (!mounted) return;
+          setState(() {
+            level++;
+            _winDialogShown = false;
+          });
+          _loadWordsAndStart();
+        },
+        onFinish: () {
+          Navigator.pop(context);
+          showDialog(
+              context: context,
+              builder: (_) => _AllDoneDialog(
+                  message: t['game_completed']!,
+                  onMenu: () => Navigator.popUntil(context, (r) => r.isFirst)));
+        },
+      ),
+    );
+  }
+
+  void _showInterstitial() {
+    if (_interstitialAd == null || _adsRemoved) return;
+    _interstitialAd!.fullScreenContentCallback =
+        FullScreenContentCallback(onAdDismissedFullScreenContent: (ad) {
+      ad.dispose();
+      _loadInterstitialAd();
+    }, onAdFailedToShowFullScreenContent: (ad, _) {
+      ad.dispose();
+      _loadInterstitialAd();
+    });
+    _interstitialAd!.show();
+    _interstitialAd = null;
+  }
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // BUILD
+  // ──────────────────────────────────────────────────────────────────────────
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isLoading || gridSize == 0) return _buildLoading();
+
+    final sw = MediaQuery.of(context).size.width;
+    // Izgara için yatay padding 16px her taraf
+    final gridPx = sw - 32.0;
+    final cs = gridPx / gridSize;
+
+    return Scaffold(
+      backgroundColor: AppColors.gridBg,
+      body: Stack(
+        children: [
+          // Arkaplan
+          Positioned.fill(
+              child: Image.asset(_currentBg,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => Container(
+                      decoration: const BoxDecoration(
+                          gradient: LinearGradient(
+                              colors: [Color(0xFF0D1B2A), Color(0xFF1B2838)],
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter))))),
+          Positioned.fill(
+              child: Container(color: Colors.black.withOpacity(0.62))),
+          SafeArea(
+            child: Column(
+              children: [
+                _buildTopBar(),
+                _buildWordList(),
+                Expanded(child: _buildGrid(gridPx, cs)),
+                _buildBottomBar(cs),
+              ],
+            ),
+          ),
+          if (isPaused)
+            ModalBarrier(
+                color: Colors.black.withOpacity(0.5), dismissible: false),
+        ],
+      ),
+      bottomNavigationBar: _adsRemoved || !_isBannerLoaded || _bannerAd == null
+          ? null
+          : SafeArea(
+              child: SizedBox(
+                  width: _bannerAd!.size.width.toDouble(),
+                  height: _bannerAd!.size.height.toDouble(),
+                  child: AdWidget(ad: _bannerAd!))),
+    );
+  }
+
+  Widget _buildLoading() {
+    return Scaffold(
+      backgroundColor: AppColors.bg1,
+      body: Stack(
+        children: [
+          const StarfieldBackground(),
+          Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const SizedBox(
+                    width: 60,
+                    height: 60,
+                    child: CircularProgressIndicator(
+                        color: AppColors.gold,
+                        strokeWidth: 3,
+                        backgroundColor: AppColors.surface)),
+                const SizedBox(height: 24),
+                Text(t['loading']!, style: AppTextStyles.titleLarge),
+                const SizedBox(height: 8),
+                Text(t['loading_info']!,
+                    style: AppTextStyles.bodyMedium,
+                    textAlign: TextAlign.center),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTopBar() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      child: Row(
+        children: [
+          _IconCircleButton(
+              icon: Icons.menu_rounded,
+              onTap: foundWords.length < words.length ? _showPauseMenu : () {}),
+          const SizedBox(width: 10),
+          Expanded(
+            child: GlassCard(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+              borderRadius: 14,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _TopStat(
+                      label: t['level']!,
+                      value: '$level',
+                      icon: Icons.layers_rounded,
+                      color: AppColors.accent),
+                  Container(width: 1, height: 28, color: AppColors.border),
+                  _TopStat(
+                      label: t['score']!,
+                      value: '$score',
+                      icon: Icons.stars_rounded,
+                      color: AppColors.gold),
+                  Container(width: 1, height: 28, color: AppColors.border),
+                  _TopStat(
+                      label: t['time']!,
+                      value: _fmt(seconds),
+                      icon: Icons.timer_rounded,
+                      color: AppColors.success),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          GestureDetector(
+              onTap: _openStore, child: CoinBadge(coins: coins, fontSize: 13)),
+        ],
+      ),
+    );
+  }
+
+  // ── KELİME LİSTESİ — Güzel chip tasarımı ──────────────────────────────────
+  Widget _buildWordList() {
+    final found = foundWords.length;
+    final total = words.length;
+    final pct = total > 0 ? found / total : 0.0;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.surface.withOpacity(0.92),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: AppColors.border.withOpacity(0.8)),
+          boxShadow: [
+            BoxShadow(
+                color: Colors.black.withOpacity(0.35),
+                blurRadius: 18,
+                offset: const Offset(0, 6)),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(18),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // İlerleme satırı
+                  Row(children: [
+                    // Mini rozet
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                          color: AppColors.accent.withOpacity(0.18),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                              color: AppColors.accent.withOpacity(0.35))),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.search_rounded,
+                              color: AppColors.accent, size: 11),
+                          const SizedBox(width: 4),
+                          Text('$found / $total',
+                              style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.accent,
+                                  letterSpacing: 0.5)),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    // Progress bar
+                    Expanded(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(6),
+                        child: Stack(
+                          children: [
+                            Container(height: 7, color: AppColors.surfaceAlt),
+                            AnimatedContainer(
+                              duration: const Duration(milliseconds: 400),
+                              curve: Curves.easeOutCubic,
+                              height: 7,
+                              width: double.infinity,
+                              alignment: Alignment.centerLeft,
+                              child: FractionallySizedBox(
+                                widthFactor: pct,
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    gradient: const LinearGradient(colors: [
+                                      AppColors.gold,
+                                      AppColors.success
+                                    ]),
+                                    borderRadius: BorderRadius.circular(6),
+                                    boxShadow: [
+                                      BoxShadow(
+                                          color:
+                                              AppColors.gold.withOpacity(0.5),
+                                          blurRadius: 6)
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Text('${total - found} ${t['words_remaining']!}',
+                        style: const TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textMuted,
+                            letterSpacing: 0.5)),
+                  ]),
+                  const SizedBox(height: 10),
+                  // Kelime chip'leri
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: words.map((w) {
+                      final isFnd = foundWords.contains(w);
+                      final pathColor = isFnd
+                          ? (drawnPaths.firstWhere((p) => p['word'] == w,
+                              orElse: () => {
+                                    'color': AppColors.success
+                                  })['color'] as Color)
+                          : null;
+
+                      return AnimatedContainer(
+                        duration: const Duration(milliseconds: 350),
+                        curve: Curves.easeOutCubic,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 9, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: isFnd
+                              ? pathColor!.withOpacity(0.18)
+                              : AppColors.gridCell,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: isFnd
+                                ? pathColor!.withOpacity(0.7)
+                                : AppColors.gridCellBorder,
+                            width: isFnd ? 1.5 : 1,
+                          ),
+                          boxShadow: isFnd
+                              ? [
+                                  BoxShadow(
+                                      color: pathColor!.withOpacity(0.3),
+                                      blurRadius: 8)
+                                ]
+                              : null,
+                        ),
+                        child: isFnd
+                            ? Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.check_circle_rounded,
+                                      color: pathColor, size: 11),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    w,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w800,
+                                      color: pathColor,
+                                      decoration: TextDecoration.lineThrough,
+                                      decorationColor: pathColor,
+                                      decorationThickness: 2,
+                                      letterSpacing: 0.8,
+                                    ),
+                                  ),
+                                ],
+                              )
+                            : Text(
+                                w,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.textSecondary,
+                                  letterSpacing: 0.8,
+                                ),
+                              ),
+                      );
+                    }).toList(),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ── IZGARA — Büyük, net, profesyonel ──────────────────────────────────────
+  Widget _buildGrid(double gridPx, double cs) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+        child: AnimatedBuilder(
+          animation: _gridEnterAnim,
+          builder: (_, child) => Opacity(
+            opacity: _gridEnterAnim.value,
+            child: Transform.scale(
+              scale: 0.92 + 0.08 * _gridEnterAnim.value,
+              child: child,
+            ),
+          ),
+          child: Container(
+            width: gridPx,
+            height: gridPx,
+            decoration: BoxDecoration(
+              color: AppColors.gridBg,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                  color: AppColors.accent.withOpacity(0.25), width: 1.5),
+              boxShadow: [
+                BoxShadow(
+                    color: AppColors.accent.withOpacity(0.12),
+                    blurRadius: 30,
+                    spreadRadius: 2),
+                BoxShadow(
+                    color: Colors.black.withOpacity(0.5),
+                    blurRadius: 25,
+                    offset: const Offset(0, 10)),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(19),
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onPanStart: (d) => _onPanStart(d, cs),
+                onPanUpdate: (d) => _onPanUpdate(d, cs),
+                onPanEnd: _onPanEnd,
+                child: Stack(
+                  children: [
+                    // Izgara arka planı
+                    Container(
+                      color: AppColors.gridBg,
+                    ),
+                    // Hücreler
+                    GridView.builder(
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: gridSize,
+                          mainAxisSpacing: 0,
+                          crossAxisSpacing: 0),
+                      itemCount: gridSize * gridSize,
+                      itemBuilder: (_, idx) {
+                        final r = idx ~/ gridSize, c = idx % gridSize;
+                        return _buildCell(r, c, cs);
+                      },
+                    ),
+                    // Çizilen yollar
+                    CustomPaint(
+                        painter: _WordLinePainter(
+                            drawnPaths, cs, isPaused ? 0.4 : 0.9),
+                        size: Size(gridPx, gridPx)),
+                    // Sürükleme önizleme
+                    if (_dragStartRow != null &&
+                        _dragEndRow != null &&
+                        !isPaused)
+                      CustomPaint(
+                          painter: _WordLinePainter([
+                            {
+                              'color': Colors.white.withOpacity(0.45),
+                              'cells': _cellsInLine(_dragStartRow!,
+                                  _dragStartCol!, _dragEndRow!, _dragEndCol!)
+                            }
+                          ], cs, 0.7, isDashed: true),
+                          size: Size(gridPx, gridPx)),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ── HÜCRE — Büyük, okunabilir harfler ────────────────────────────────────
+  Widget _buildCell(int r, int c, double cs) {
+    final path = drawnPaths.firstWhere(
+        (p) => (p['cells'] as List<Offset>)
+            .any((o) => o.dx.toInt() == c && o.dy.toInt() == r),
+        orElse: () => <String, dynamic>{});
+
+    final inDrag = _dragStartRow != null &&
+        _dragEndRow != null &&
+        _cellsInLine(_dragStartRow!, _dragStartCol!, _dragEndRow!, _dragEndCol!)
+            .any((o) => o.dx.toInt() == c && o.dy.toInt() == r);
+
+    final isPulsing = path.isNotEmpty && pulsingWords.contains(path['word']);
+
+    // Izgara çizgileri için çok ince border
+    final isLastCol = c == gridSize - 1;
+    final isLastRow = r == gridSize - 1;
+
+    return AnimatedBuilder(
+      animation: _pulseCtrl,
+      builder: (_, __) {
+        Color bgColor;
+        Color letterColor;
+        List<Shadow>? shadows;
+
+        if (path.isNotEmpty) {
+          final pathColor = path['color'] as Color;
+          final pulse = isPulsing ? 0.28 + 0.22 * _pulseCtrl.value : 0.20;
+          bgColor = pathColor.withOpacity(pulse);
+          letterColor = pathColor;
+          shadows = [
+            Shadow(color: pathColor.withOpacity(0.8), blurRadius: 10),
+          ];
+        } else if (inDrag) {
+          bgColor = Colors.white.withOpacity(0.14);
+          letterColor = AppColors.textPrimary;
+          shadows = null;
+        } else {
+          bgColor = Colors.transparent;
+          letterColor = AppColors.textPrimary.withOpacity(0.88);
+          shadows = null;
+        }
+
+        // Harf büyüklüğü: ızgara küçüldükçe harf de küçülür ama minimum okunabilir kalır
+        final fontSize = (cs * 0.46).clamp(11.0, 26.0);
+
+        return Container(
+          decoration: BoxDecoration(
+            color: bgColor,
+            border: Border(
+              right: isLastCol
+                  ? BorderSide.none
+                  : BorderSide(
+                      color: AppColors.gridCellBorder.withOpacity(0.5),
+                      width: 0.5),
+              bottom: isLastRow
+                  ? BorderSide.none
+                  : BorderSide(
+                      color: AppColors.gridCellBorder.withOpacity(0.5),
+                      width: 0.5),
+            ),
+          ),
+          child: Center(
+            child: Text(
+              grid[r][c],
+              style: TextStyle(
+                fontSize: fontSize,
+                fontWeight: FontWeight.w900,
+                color: letterColor,
+                shadows: shadows,
+                height: 1,
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // ── ALT BAR — Joker ve ipucu butonları ────────────────────────────────────
+  Widget _buildBottomBar(double cs) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+      child: Row(
+        children: [
+          Expanded(
+              child: _PowerButton(
+                  label: t['hint']!,
+                  count: jokers,
+                  icon: Icons.auto_awesome_rounded,
+                  color: AppColors.warning,
+                  onTap: foundWords.length < words.length && !isPaused
+                      ? _buyOrUseJoker
+                      : null,
+                  pulseCtrl: _pulseCtrl)),
+          const SizedBox(width: 12),
+          Expanded(
+              child: _PowerButton(
+                  label: t['tip']!,
+                  count: tipJokers,
+                  icon: Icons.lightbulb_rounded,
+                  color: AppColors.accentLight,
+                  onTap: foundWords.length < words.length && !isPaused
+                      ? _buyOrUseTip
+                      : null,
+                  pulseCtrl: _pulseCtrl)),
+        ],
+      ),
+    );
+  }
+
+  String _fmt(int s) =>
+      '${(s ~/ 60).toString().padLeft(2, '0')}:${(s % 60).toString().padLeft(2, '0')}';
+
+  void _showToast(String msg) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(msg,
+            style: const TextStyle(
+                color: AppColors.textPrimary, fontWeight: FontWeight.w600)),
+        backgroundColor: AppColors.surface,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        margin: const EdgeInsets.all(20),
+        duration: const Duration(seconds: 2)));
+  }
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// YARDIMCI WİDGET'LAR
+// ──────────────────────────────────────────────────────────────────────────────
+
+class GlassCard extends StatelessWidget {
+  final Widget child;
+  final EdgeInsetsGeometry? padding;
+  final double? borderRadius;
+  final Color? color;
+  final Color? borderColor;
+  final double borderWidth;
+  final List<BoxShadow>? shadows;
+
+  const GlassCard(
+      {super.key,
+      required this.child,
+      this.padding,
+      this.borderRadius,
+      this.color,
+      this.borderColor,
+      this.borderWidth = 1,
+      this.shadows});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+          color: color ?? AppColors.surface.withOpacity(0.85),
+          borderRadius: BorderRadius.circular(borderRadius ?? 20),
+          border: Border.all(
+              color: borderColor ?? AppColors.border, width: borderWidth),
+          boxShadow: shadows ??
+              [
+                BoxShadow(
+                    color: Colors.black.withOpacity(0.3),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8))
+              ]),
+      child: ClipRRect(
+          borderRadius: BorderRadius.circular(borderRadius ?? 20),
+          child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              child: Padding(
+                  padding: padding ?? const EdgeInsets.all(20), child: child))),
+    );
+  }
+}
+
+class GoldButton extends StatefulWidget {
+  final String label;
+  final VoidCallback? onTap;
+  final IconData? icon;
+  final double? width;
+  final double height;
+  final double fontSize;
+
+  const GoldButton(
+      {super.key,
+      required this.label,
+      this.onTap,
+      this.icon,
+      this.width,
+      this.height = 60,
+      this.fontSize = 18});
+
+  @override
+  State<GoldButton> createState() => _GoldButtonState();
+}
+
+class _GoldButtonState extends State<GoldButton>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  late Animation<double> _scaleAnim;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 100));
+    _scaleAnim = Tween(begin: 1.0, end: 0.95)
+        .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOut));
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: (_) => _ctrl.forward(),
+      onTapUp: (_) {
+        _ctrl.reverse();
+        widget.onTap?.call();
+      },
+      onTapCancel: () => _ctrl.reverse(),
+      child: ScaleTransition(
+        scale: _scaleAnim,
+        child: Container(
+          width: widget.width,
+          height: widget.height,
+          decoration: BoxDecoration(
+              gradient: const LinearGradient(colors: [
+                AppColors.goldLight,
+                AppColors.gold,
+                AppColors.goldDark
+              ], begin: Alignment.topLeft, end: Alignment.bottomRight),
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                    color: AppColors.gold.withOpacity(0.4),
+                    blurRadius: 20,
+                    offset: const Offset(0, 6))
+              ]),
+          child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+            if (widget.icon != null) ...[
+              Icon(widget.icon, color: AppColors.bg1, size: 22),
+              const SizedBox(width: 10)
+            ],
+            Text(widget.label,
+                style: TextStyle(
+                    fontFamily: 'Georgia',
+                    fontSize: widget.fontSize,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.bg1,
+                    letterSpacing: 2)),
+          ]),
+        ),
+      ),
+    );
+  }
+}
+
+class AppDivider extends StatelessWidget {
+  const AppDivider({super.key});
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+        height: 1,
+        decoration: const BoxDecoration(
+            gradient: LinearGradient(colors: [
+          Colors.transparent,
+          AppColors.border,
+          Colors.transparent
+        ])));
+  }
+}
+
+class CoinBadge extends StatelessWidget {
+  final int coins;
+  final double fontSize;
+
+  const CoinBadge({super.key, required this.coins, this.fontSize = 16});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+      decoration: BoxDecoration(
+          color: AppColors.gold.withOpacity(0.15),
+          borderRadius: BorderRadius.circular(30),
+          border: Border.all(color: AppColors.gold.withOpacity(0.4))),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        const Icon(Icons.monetization_on_rounded,
+            color: AppColors.gold, size: 18),
+        const SizedBox(width: 6),
+        Text('$coins',
+            style: TextStyle(
+                fontSize: fontSize,
+                fontWeight: FontWeight.w800,
+                color: AppColors.gold))
+      ]),
+    );
+  }
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// DİĞER YARDIMCI WİDGET'LAR
+// ──────────────────────────────────────────────────────────────────────────────
+
+class _FadeSlide extends StatelessWidget {
+  final Animation<double> animation;
+  final Widget child;
+  const _FadeSlide({required this.animation, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+        animation: animation,
+        builder: (_, __) => Opacity(
+            opacity: animation.value.clamp(0.0, 1.0),
+            child: Transform.translate(
+                offset: Offset(0, 30 * (1 - animation.value)), child: child)));
+  }
+}
+
+class _StatCard extends StatelessWidget {
+  final String label;
+  final String value;
+  final IconData icon;
+  final Color color;
+  final bool isClickable;
+
+  const _StatCard(
+      {required this.label,
+      required this.value,
+      required this.icon,
+      required this.color,
+      this.isClickable = false});
+
+  @override
+  Widget build(BuildContext context) {
+    return GlassCard(
+      padding: const EdgeInsets.all(16),
+      borderColor: isClickable ? color.withOpacity(0.4) : AppColors.border,
+      shadows: isClickable
+          ? [BoxShadow(color: color.withOpacity(0.2), blurRadius: 20)]
+          : null,
+      child: Column(children: [
+        Icon(icon, color: color, size: 22),
+        const SizedBox(height: 8),
+        Text(value,
+            style: TextStyle(
+                fontSize: 18, fontWeight: FontWeight.w900, color: color)),
+        const SizedBox(height: 4),
+        Text(label,
+            style: AppTextStyles.labelSmall, overflow: TextOverflow.ellipsis)
+      ]),
+    );
+  }
+}
+
+class _LanguageToggle extends StatelessWidget {
+  final String lang;
+  final ValueChanged<String> onChange;
+
+  const _LanguageToggle({required this.lang, required this.onChange});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(30),
+          border: Border.all(color: AppColors.border)),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: ['tr', 'en'].map((l) {
+          final selected = lang == l;
+          return GestureDetector(
+            onTap: () => onChange(l),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 250),
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
+              decoration: BoxDecoration(
+                  color: selected ? AppColors.accent : Colors.transparent,
+                  borderRadius: BorderRadius.circular(30)),
+              child: Text(l.toUpperCase(),
+                  style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: selected ? Colors.white : AppColors.textSecondary,
+                      letterSpacing: 1)),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+}
+
+class _IconCircleButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const _IconCircleButton({required this.icon, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+              color: AppColors.surface,
+              shape: BoxShape.circle,
+              border: Border.all(color: AppColors.border)),
+          child: Icon(icon, color: AppColors.textSecondary, size: 20)),
+    );
+  }
+}
+
+class _DailyRewardDialog extends StatefulWidget {
+  final Map<String, String> t;
+  const _DailyRewardDialog({required this.t});
+
+  @override
+  State<_DailyRewardDialog> createState() => _DailyRewardDialogState();
+}
+
+class _DailyRewardDialogState extends State<_DailyRewardDialog>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  late Animation<double> _scale;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 600));
+    _scale = Tween(begin: 0.6, end: 1.0)
+        .animate(CurvedAnimation(parent: _ctrl, curve: Curves.elasticOut));
+    _ctrl.forward();
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: ScaleTransition(
+        scale: _scale,
+        child: GlassCard(
+          padding: const EdgeInsets.all(32),
+          borderColor: AppColors.gold.withOpacity(0.5),
+          shadows: [
+            BoxShadow(
+                color: AppColors.gold.withOpacity(0.3),
+                blurRadius: 40,
+                spreadRadius: 5)
+          ],
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('🎁', style: TextStyle(fontSize: 60)),
+              const SizedBox(height: 16),
+              Text(widget.t['congratulations']!,
+                  style: AppTextStyles.displayMedium
+                      .copyWith(color: AppColors.gold)),
+              const SizedBox(height: 8),
+              Text(widget.t['daily_bonus']!,
+                  style: AppTextStyles.goldLabel.copyWith(fontSize: 32)),
+              const SizedBox(height: 24),
+              GoldButton(
+                  label: 'TAMAM',
+                  width: 160,
+                  height: 50,
+                  onTap: () => Navigator.pop(context)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SettingsSheet extends StatefulWidget {
+  final Map<String, String> t;
+  const _SettingsSheet({required this.t});
+
+  @override
+  State<_SettingsSheet> createState() => _SettingsSheetState();
+}
+
+class _SettingsSheetState extends State<_SettingsSheet> {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          border: Border(top: BorderSide(color: AppColors.border))),
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 40),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                  color: AppColors.border,
+                  borderRadius: BorderRadius.circular(2))),
+          const SizedBox(height: 24),
+          Text(widget.t['settings']!, style: AppTextStyles.titleLarge),
+          const SizedBox(height: 24),
+          _SettingsTile(
+              icon: Icons.volume_up_rounded,
+              label: widget.t['sound']!,
+              value: AppSettings.soundEnabled,
+              onChanged: (v) async {
+                setState(() => AppSettings.soundEnabled = v);
+                await AppSettings.save();
+              }),
+          const AppDivider(),
+          _SettingsTile(
+              icon: Icons.music_note_rounded,
+              label: widget.t['music']!,
+              value: AppSettings.musicEnabled,
+              onChanged: (v) async {
+                setState(() => AppSettings.musicEnabled = v);
+                await AppSettings.save();
+              }),
+          const AppDivider(),
+          _SettingsTile(
+              icon: Icons.vibration_rounded,
+              label: widget.t['haptics']!,
+              value: AppSettings.hapticsEnabled,
+              onChanged: (v) async {
+                setState(() => AppSettings.hapticsEnabled = v);
+                await AppSettings.save();
+              }),
+        ],
+      ),
+    );
+  }
+}
+
+class _SettingsTile extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  const _SettingsTile(
+      {required this.icon,
+      required this.label,
+      required this.value,
+      required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 14),
+      child: Row(
+        children: [
+          Icon(icon, color: AppColors.accent, size: 22),
+          const SizedBox(width: 16),
+          Expanded(
+              child: Text(label,
+                  style: AppTextStyles.bodyMedium
+                      .copyWith(color: AppColors.textPrimary))),
+          Switch.adaptive(
+              value: value,
+              onChanged: onChanged,
+              activeColor: AppColors.accent,
+              trackColor: WidgetStateProperty.resolveWith((states) =>
+                  states.contains(WidgetState.selected)
+                      ? AppColors.accentGlow
+                      : AppColors.border)),
+        ],
+      ),
+    );
+  }
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// PREMIUM SCREEN
+// ──────────────────────────────────────────────────────────────────────────────
+
+class PremiumScreen extends StatefulWidget {
+  final String lang;
+  final Function(int, bool) onPurchase;
+
+  const PremiumScreen(
+      {super.key, required this.lang, required this.onPurchase});
+
+  @override
+  State<PremiumScreen> createState() => _PremiumScreenState();
+}
+
+class _PremiumScreenState extends State<PremiumScreen> {
+  final InAppPurchase _iap = InAppPurchase.instance;
+  StreamSubscription<List<PurchaseDetails>>? _sub;
+  List<ProductDetails> _products = [];
+  bool _isAvailable = false;
+  bool _isLoading = true;
+
+  static const _removeAdsAndroid = 'remove_ads';
+  static const _removeAdsIOS = 'remove_ads_ios';
+
+  static const _packagesAndroid = {
+    'coin_250': {'coins': 250, 'bonus': '', 'popular': false},
+    'coin_750': {'coins': 750, 'bonus': '', 'popular': false},
+    'coin_1600': {'coins': 1600, 'bonus': '+25%', 'popular': false},
+    'coin_3600': {'coins': 3600, 'bonus': '+45%', 'popular': true},
+    'coin_8000': {'coins': 8000, 'bonus': '+60%', 'popular': false},
+    'remove_ads': {'coins': 0, 'bonus': '', 'popular': false},
+  };
+
+  static const _packagesIOS = {
+    'coin_250_ios': {'coins': 250, 'bonus': '', 'popular': false},
+    'coin_750_ios': {'coins': 750, 'bonus': '', 'popular': false},
+    'coin_1600_ios': {'coins': 1600, 'bonus': '+25%', 'popular': false},
+    'coin_3600_ios': {'coins': 3600, 'bonus': '+45%', 'popular': true},
+    'coin_8000_ios': {'coins': 8000, 'bonus': '+60%', 'popular': false},
+    'remove_ads_ios': {'coins': 0, 'bonus': '', 'popular': false},
+  };
+
+  late final Map<String, dynamic> _packages;
+  late final Set<String> _productIds;
+
+  @override
+  void initState() {
+    super.initState();
+    _packages = Map<String, dynamic>.from(
+        Platform.isAndroid ? _packagesAndroid : _packagesIOS);
+    _productIds = _packages.keys.toSet();
+    _init();
+  }
+
+  Future<void> _init() async {
+    final available = await _iap.isAvailable();
+    if (!mounted) return;
+    if (!available) {
+      setState(() {
+        _isLoading = false;
+        _isAvailable = false;
+      });
+      return;
+    }
+    _isAvailable = true;
+    _sub = _iap.purchaseStream
+        .listen(_onPurchase, onError: (e) => debugPrint('IAP error: $e'));
+    try {
+      final resp = await _iap.queryProductDetails(_productIds);
+      if (mounted)
+        setState(() {
+          _products = resp.productDetails;
+          _isLoading = false;
+        });
+    } catch (e) {
+      debugPrint('queryProductDetails: $e');
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  void _onPurchase(List<PurchaseDetails> purchases) async {
+    final prefs = await SharedPreferences.getInstance();
+
+    for (final p in purchases) {
+      if (p.status == PurchaseStatus.purchased ||
+          p.status == PurchaseStatus.restored) {
+        int coins = 0;
+        bool removeAds = false;
+        final id = p.productID;
+        if (id == _removeAdsAndroid || id == _removeAdsIOS) {
+          removeAds = true;
+          await prefs.setBool('ads_removed', true);
+        } else if (_packages.containsKey(id)) {
+          coins = (_packages[id]?['coins'] as num?)?.toInt() ?? 0;
+        }
+        widget.onPurchase(coins, removeAds);
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: const Text('Purchase successful! 🎉'),
+              backgroundColor: AppColors.success,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+              behavior: SnackBarBehavior.floating,
+              margin: const EdgeInsets.all(20)));
+        }
+      }
+      if (p.pendingCompletePurchase) {
+        try {
+          await _iap.completePurchase(p);
+        } catch (e) {
+          debugPrint('completePurchase: $e');
+        }
+      }
+    }
+  }
+
+  Future<void> _buy(ProductDetails product) async {
+    final param = PurchaseParam(productDetails: product);
+    try {
+      if (product.id == _removeAdsAndroid || product.id == _removeAdsIOS) {
+        await _iap.buyNonConsumable(purchaseParam: param);
+      } else {
+        await _iap.buyConsumable(purchaseParam: param, autoConsume: true);
+      }
+    } catch (e) {
+      debugPrint('buyProduct: $e');
+    }
+  }
+
+  @override
+  void dispose() {
+    _sub?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.bg1,
+      body: Stack(
+        children: [
+          const StarfieldBackground(),
+          SafeArea(
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                  child: Row(
+                    children: [
+                      _IconCircleButton(
+                          icon: Icons.arrow_back_ios_new_rounded,
+                          onTap: () => Navigator.pop(context)),
+                      const Spacer(),
+                      ShaderMask(
+                          shaderCallback: (b) => const LinearGradient(colors: [
+                                AppColors.textPrimary,
+                                AppColors.gold
+                              ]).createShader(b),
+                          child: const Text('STORE',
+                              style: TextStyle(
+                                  fontFamily: 'Georgia',
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w900,
+                                  color: Colors.white,
+                                  letterSpacing: 4))),
+                      const Spacer(),
+                      _IconCircleButton(
+                          icon: Icons.restore_rounded,
+                          onTap: () async {
+                            await _iap.restorePurchases();
+                            if (mounted)
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                      content: Text('Restoring purchases...'),
+                                      behavior: SnackBarBehavior.floating));
+                          }),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Expanded(
+                  child: _isLoading
+                      ? const Center(
+                          child:
+                              CircularProgressIndicator(color: AppColors.gold))
+                      : !_isAvailable || _products.isEmpty
+                          ? _EmptyStore()
+                          : ListView(
+                              padding: const EdgeInsets.fromLTRB(20, 0, 20, 40),
+                              physics: const BouncingScrollPhysics(),
+                              children: [
+                                Padding(
+                                    padding: const EdgeInsets.only(bottom: 16),
+                                    child: Row(children: [
+                                      const Icon(Icons.monetization_on_rounded,
+                                          color: AppColors.gold, size: 18),
+                                      const SizedBox(width: 8),
+                                      Text('COIN PACKAGES',
+                                          style: AppTextStyles.labelSmall
+                                              .copyWith(
+                                                  color: AppColors.gold,
+                                                  letterSpacing: 2))
+                                    ])),
+                                ..._products
+                                    .where((p) =>
+                                        p.id != _removeAdsAndroid &&
+                                        p.id != _removeAdsIOS)
+                                    .map((p) {
+                                  final info = _packages[p.id] as Map?;
+                                  final bonus = info?['bonus'] as String? ?? '';
+                                  final isPopular = info?['popular'] == true;
+                                  final coins =
+                                      (info?['coins'] as num?)?.toInt() ?? 0;
+                                  return Padding(
+                                      padding:
+                                          const EdgeInsets.only(bottom: 12),
+                                      child: _ProductCard(
+                                          product: p,
+                                          coins: coins,
+                                          bonus: bonus,
+                                          isPopular: isPopular,
+                                          onBuy: () => _buy(p)));
+                                }),
+                                const SizedBox(height: 24),
+                                Padding(
+                                    padding: const EdgeInsets.only(bottom: 16),
+                                    child: Row(children: [
+                                      const Icon(Icons.workspace_premium,
+                                          color: AppColors.accentLight,
+                                          size: 18),
+                                      const SizedBox(width: 8),
+                                      Text('PREMIUM',
+                                          style: AppTextStyles.labelSmall
+                                              .copyWith(
+                                                  color: AppColors.accentLight,
+                                                  letterSpacing: 2))
+                                    ])),
+                                ..._products
+                                    .where((p) =>
+                                        p.id == _removeAdsAndroid ||
+                                        p.id == _removeAdsIOS)
+                                    .map((p) => _RemoveAdsCard(
+                                        product: p, onBuy: () => _buy(p))),
+                              ],
+                            ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EmptyStore extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: GlassCard(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.wifi_off_rounded,
+                size: 60, color: AppColors.textMuted),
+            const SizedBox(height: 16),
+            const Text('Store unavailable', style: AppTextStyles.titleLarge),
+            const SizedBox(height: 8),
+            const Text('Please check your internet connection.',
+                style: AppTextStyles.bodyMedium, textAlign: TextAlign.center),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ProductCard extends StatelessWidget {
+  final ProductDetails product;
+  final int coins;
+  final String bonus;
+  final bool isPopular;
+  final VoidCallback onBuy;
+
+  const _ProductCard(
+      {required this.product,
+      required this.coins,
+      required this.bonus,
+      required this.isPopular,
+      required this.onBuy});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onBuy,
+      child: Container(
+        decoration: BoxDecoration(
+          color:
+              isPopular ? AppColors.gold.withOpacity(0.12) : AppColors.surface,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+              color: isPopular
+                  ? AppColors.gold.withOpacity(0.5)
+                  : AppColors.border,
+              width: isPopular ? 1.5 : 1),
+          boxShadow: isPopular
+              ? [
+                  BoxShadow(
+                      color: AppColors.gold.withOpacity(0.15), blurRadius: 20)
+                ]
+              : null,
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        child: Row(
+          children: [
+            Container(
+              width: 52,
+              height: 52,
+              decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                      colors: isPopular
+                          ? [AppColors.gold, AppColors.goldDark]
+                          : [AppColors.surfaceAlt, AppColors.surfaceAlt]),
+                  shape: BoxShape.circle),
+              child: Icon(Icons.monetization_on_rounded,
+                  color: isPopular ? AppColors.bg1 : AppColors.gold, size: 26),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(children: [
+                    Text('$coins Coins',
+                        style: AppTextStyles.titleLarge.copyWith(
+                            color: isPopular
+                                ? AppColors.gold
+                                : AppColors.textPrimary)),
+                    if (isPopular) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                              color: AppColors.gold,
+                              borderRadius: BorderRadius.circular(6)),
+                          child: const Text('BEST',
+                              style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.bg1,
+                                  letterSpacing: 1)))
+                    ],
+                  ]),
+                  if (bonus.isNotEmpty)
+                    Text('Bonus $bonus',
+                        style: AppTextStyles.bodyMedium
+                            .copyWith(color: AppColors.success, fontSize: 13)),
+                ],
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              decoration: BoxDecoration(
+                  gradient: isPopular
+                      ? const LinearGradient(
+                          colors: [AppColors.gold, AppColors.goldDark])
+                      : null,
+                  color: isPopular ? null : AppColors.surfaceAlt,
+                  borderRadius: BorderRadius.circular(12)),
+              child: Text(product.price,
+                  style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      color:
+                          isPopular ? AppColors.bg1 : AppColors.textPrimary)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _RemoveAdsCard extends StatelessWidget {
+  final ProductDetails product;
+  final VoidCallback onBuy;
+
+  const _RemoveAdsCard({required this.product, required this.onBuy});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onBuy,
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(colors: [
+            AppColors.accent.withOpacity(0.2),
+            AppColors.accent.withOpacity(0.05)
+          ], begin: Alignment.topLeft, end: Alignment.bottomRight),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: AppColors.accent.withOpacity(0.5)),
+          boxShadow: [
+            BoxShadow(color: AppColors.accent.withOpacity(0.15), blurRadius: 20)
+          ],
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+        child: Row(
+          children: [
+            Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                        colors: [AppColors.accent, AppColors.accentLight]),
+                    shape: BoxShape.circle),
+                child: const Icon(Icons.block_rounded,
+                    color: Colors.white, size: 26)),
+            const SizedBox(width: 16),
+            Expanded(
+                child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                  Text(product.title, style: AppTextStyles.titleLarge),
+                  const Text('Permanent • One-time purchase',
+                      style: AppTextStyles.bodyMedium)
+                ])),
+            Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                        colors: [AppColors.accent, AppColors.accentLight]),
+                    borderRadius: BorderRadius.circular(12)),
+                child: Text(product.price,
+                    style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white))),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// OYUN İÇİ DİALOG VE WİDGET'LAR
+// ──────────────────────────────────────────────────────────────────────────────
+
+class _TipOverlay extends StatefulWidget {
+  final String tip, word;
+  const _TipOverlay({required this.tip, required this.word});
+
+  @override
+  State<_TipOverlay> createState() => _TipOverlayState();
+}
+
+class _TipOverlayState extends State<_TipOverlay>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  late Animation<double> _scale;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 400));
+    _scale = Tween(begin: 0.7, end: 1.0)
+        .animate(CurvedAnimation(parent: _ctrl, curve: Curves.elasticOut));
+    _ctrl.forward();
+    Future.delayed(const Duration(seconds: 2), () {
+      if (mounted) Navigator.pop(context);
+    });
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => Navigator.pop(context),
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Center(
+          child: ScaleTransition(
+            scale: _scale,
+            child: GlassCard(
+              padding: const EdgeInsets.all(32),
+              borderColor: AppColors.accentLight.withOpacity(0.5),
+              shadows: [
+                BoxShadow(
+                    color: AppColors.accent.withOpacity(0.3), blurRadius: 40)
+              ],
+              child: Column(mainAxisSize: MainAxisSize.min, children: [
+                const Icon(Icons.lightbulb_rounded,
+                    color: AppColors.accentLight, size: 48),
+                const SizedBox(height: 16),
+                Text(widget.tip,
+                    style: const TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.w900,
+                        color: AppColors.textPrimary,
+                        letterSpacing: 8)),
+                const SizedBox(height: 8),
+                Text('${widget.word.length} letters',
+                    style: AppTextStyles.bodyMedium)
+              ]),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PauseDialog extends StatelessWidget {
+  final Map<String, String> t;
+  final VoidCallback onResume, onMenu, onRestart;
+
+  const _PauseDialog(
+      {required this.t,
+      required this.onResume,
+      required this.onMenu,
+      required this.onRestart});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 40),
+        child: GlassCard(
+          padding: const EdgeInsets.all(28),
+          borderColor: AppColors.accent.withOpacity(0.4),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.pause_circle_filled_rounded,
+                  color: AppColors.accent, size: 52),
+              const SizedBox(height: 12),
+              Text(t['paused']!, style: AppTextStyles.displayMedium),
+              const SizedBox(height: 28),
+              GoldButton(
+                  label: t['resume']!, width: double.infinity, onTap: onResume),
+              const SizedBox(height: 12),
+              _OutlineBtn(
+                  label: 'RESTART',
+                  icon: Icons.restart_alt_rounded,
+                  onTap: onRestart,
+                  color: AppColors.warning),
+              const SizedBox(height: 12),
+              _OutlineBtn(
+                  label: t['main_menu']!,
+                  icon: Icons.home_rounded,
+                  onTap: onMenu,
+                  color: AppColors.error),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _WinDialog extends StatefulWidget {
+  final Map<String, String> t;
+  final int level, seconds, score, wordsFound, totalWords;
+  final bool canGoNext;
+  final VoidCallback onMenu, onNext, onFinish;
+
+  const _WinDialog(
+      {required this.t,
+      required this.level,
+      required this.seconds,
+      required this.score,
+      required this.wordsFound,
+      required this.totalWords,
+      required this.canGoNext,
+      required this.onMenu,
+      required this.onNext,
+      required this.onFinish});
+
+  @override
+  State<_WinDialog> createState() => _WinDialogState();
+}
+
+class _WinDialogState extends State<_WinDialog>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  late Animation<double> _scale;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 700));
+    _scale = Tween(begin: 0.6, end: 1.0)
+        .animate(CurvedAnimation(parent: _ctrl, curve: Curves.elasticOut));
+    _ctrl.forward();
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  String _fmt(int s) =>
+      '${(s ~/ 60).toString().padLeft(2, '0')}:${(s % 60).toString().padLeft(2, '0')}';
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: ScaleTransition(
+        scale: _scale,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 32),
+          child: GlassCard(
+            padding: const EdgeInsets.all(28),
+            borderColor: AppColors.gold.withOpacity(0.5),
+            shadows: [
+              BoxShadow(
+                  color: AppColors.gold.withOpacity(0.25),
+                  blurRadius: 40,
+                  spreadRadius: 5)
+            ],
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ShaderMask(
+                    shaderCallback: (b) => const LinearGradient(
+                            colors: [AppColors.gold, AppColors.goldLight])
+                        .createShader(b),
+                    child: Text('★  ${widget.t['level_completed']}  ★',
+                        style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                            letterSpacing: 1),
+                        textAlign: TextAlign.center)),
+                const SizedBox(height: 4),
+                Text(widget.t['congratulations']!,
+                    style: AppTextStyles.bodyMedium),
+                const SizedBox(height: 24),
+                const AppDivider(),
+                const SizedBox(height: 20),
+                Row(children: [
+                  _WinStat(
+                      label: widget.t['level']!,
+                      value: '${widget.level}',
+                      icon: Icons.layers_rounded,
+                      color: AppColors.accent),
+                  _WinStat(
+                      label: widget.t['score']!,
+                      value: '${widget.score}',
+                      icon: Icons.stars_rounded,
+                      color: AppColors.gold),
+                  _WinStat(
+                      label: widget.t['time']!,
+                      value: _fmt(widget.seconds),
+                      icon: Icons.timer_rounded,
+                      color: AppColors.success)
+                ]),
+                const SizedBox(height: 20),
+                const AppDivider(),
+                const SizedBox(height: 20),
+                if (widget.canGoNext)
+                  GoldButton(
+                      label: widget.t['next_level']!,
+                      icon: Icons.navigate_next_rounded,
+                      width: double.infinity,
+                      onTap: widget.onNext)
+                else
+                  GoldButton(
+                      label: '🏆 TAMAMLANDI',
+                      width: double.infinity,
+                      onTap: widget.onFinish),
+                const SizedBox(height: 12),
+                _OutlineBtn(
+                    label: widget.t['main_menu']!,
+                    icon: Icons.home_rounded,
+                    onTap: widget.onMenu,
+                    color: AppColors.textSecondary),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _WinStat extends StatelessWidget {
+  final String label, value;
+  final IconData icon;
+  final Color color;
+
+  const _WinStat(
+      {required this.label,
+      required this.value,
+      required this.icon,
+      required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+        child: Column(children: [
+      Icon(icon, color: color, size: 22),
+      const SizedBox(height: 6),
+      Text(value,
+          style: TextStyle(
+              fontSize: 18, fontWeight: FontWeight.w900, color: color)),
+      const SizedBox(height: 2),
+      Text(label,
+          style: AppTextStyles.labelSmall, overflow: TextOverflow.ellipsis)
+    ]));
+  }
+}
+
+class _OutlineBtn extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final VoidCallback onTap;
+  final Color color;
+
+  const _OutlineBtn(
+      {required this.label,
+      required this.icon,
+      required this.onTap,
+      required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+        decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: color.withOpacity(0.4)),
+            color: color.withOpacity(0.07)),
+        child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+          Icon(icon, color: color, size: 18),
+          const SizedBox(width: 8),
+          Text(label,
+              style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: color,
+                  letterSpacing: 1))
+        ]),
+      ),
+    );
+  }
+}
+
+class _ErrorDialog extends StatelessWidget {
+  final String message;
+  final VoidCallback onMenu;
+
+  const _ErrorDialog({required this.message, required this.onMenu});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 40),
+        child: GlassCard(
+          padding: const EdgeInsets.all(28),
+          borderColor: AppColors.error.withOpacity(0.5),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.error_outline_rounded,
+                  color: AppColors.error, size: 52),
+              const SizedBox(height: 16),
+              const Text('Oops!', style: AppTextStyles.displayMedium),
+              const SizedBox(height: 8),
+              Text(message,
+                  style: AppTextStyles.bodyMedium, textAlign: TextAlign.center),
+              const SizedBox(height: 24),
+              _OutlineBtn(
+                  label: 'MAIN MENU',
+                  icon: Icons.home_rounded,
+                  onTap: onMenu,
+                  color: AppColors.error),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AllDoneDialog extends StatelessWidget {
+  final String message;
+  final VoidCallback onMenu;
+
+  const _AllDoneDialog({required this.message, required this.onMenu});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32),
+        child: GlassCard(
+          padding: const EdgeInsets.all(32),
+          borderColor: AppColors.gold.withOpacity(0.5),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('🏆', style: TextStyle(fontSize: 72)),
+              const SizedBox(height: 16),
+              const Text('CHAMPION!', style: AppTextStyles.displayMedium),
+              const SizedBox(height: 12),
+              Text(message,
+                  style: AppTextStyles.bodyMedium, textAlign: TextAlign.center),
+              const SizedBox(height: 28),
+              GoldButton(
+                  label: 'HOME',
+                  icon: Icons.home_rounded,
+                  width: double.infinity,
+                  onTap: onMenu),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// CUSTOM PAINTER - Çizgiler
+// ──────────────────────────────────────────────────────────────────────────────
+
+class _WordLinePainter extends CustomPainter {
+  final List<Map<String, dynamic>> paths;
+  final double cs;
+  final double opacity;
+  final bool isDashed;
+
+  _WordLinePainter(this.paths, this.cs, this.opacity, {this.isDashed = false});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    for (final p in paths) {
+      final cells = p['cells'] as List<Offset>;
+      if (cells.isEmpty) continue;
+
+      final color = (p['color'] as Color).withOpacity(opacity);
+      final pts = cells
+          .map((c) => Offset(c.dx * cs + cs / 2, c.dy * cs + cs / 2))
+          .toList();
+
+      if (cells.length == 1) {
+        canvas.drawCircle(
+            pts.first,
+            cs * 0.22,
+            Paint()
+              ..color = color
+              ..style = PaintingStyle.fill);
+        continue;
+      }
+
+      final strokeW = cs * 0.40;
+
+      // Glow efekti
+      canvas.drawLine(
+          pts.first,
+          pts.last,
+          Paint()
+            ..color = color.withOpacity(0.25)
+            ..strokeWidth = strokeW + 10
+            ..strokeCap = StrokeCap.round
+            ..style = PaintingStyle.stroke
+            ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8));
+
+      // Ana çizgi
+      canvas.drawLine(
+          pts.first,
+          pts.last,
+          Paint()
+            ..color = color
+            ..strokeWidth = strokeW
+            ..strokeCap = StrokeCap.round
+            ..style = PaintingStyle.stroke);
+
+      // Bitiş noktaları
+      final cap = Paint()
+        ..color = color
+        ..style = PaintingStyle.fill;
+      canvas.drawCircle(pts.first, cs * 0.22, cap);
+      canvas.drawCircle(pts.last, cs * 0.22, cap);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_WordLinePainter old) => true;
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// POWER BUTTON
+// ──────────────────────────────────────────────────────────────────────────────
+
+class _PowerButton extends StatelessWidget {
+  final String label;
+  final int count;
+  final IconData icon;
+  final Color color;
+  final VoidCallback? onTap;
+  final AnimationController pulseCtrl;
+
+  const _PowerButton(
+      {required this.label,
+      required this.count,
+      required this.icon,
+      required this.color,
+      required this.onTap,
+      required this.pulseCtrl});
+
+  @override
+  Widget build(BuildContext context) {
+    final hasCount = count > 0;
+    final canTap = onTap != null;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+            color: hasCount
+                ? color.withOpacity(0.18)
+                : AppColors.surface.withOpacity(0.6),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+                color:
+                    hasCount ? color.withOpacity(0.6) : AppColors.borderBright,
+                width: hasCount ? 1.5 : 1),
+            boxShadow: hasCount
+                ? [BoxShadow(color: color.withOpacity(0.25), blurRadius: 16)]
+                : null),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                AnimatedBuilder(
+                  animation: pulseCtrl,
+                  builder: (_, __) => Transform.scale(
+                      scale: hasCount && canTap
+                          ? 0.88 + 0.18 * pulseCtrl.value
+                          : 1.0,
+                      child: Icon(icon,
+                          color: hasCount ? color : AppColors.textMuted,
+                          size: 22)),
+                ),
+                Positioned(
+                  top: -6,
+                  right: -8,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                    decoration: BoxDecoration(
+                        color: hasCount ? color : AppColors.textMuted,
+                        borderRadius: BorderRadius.circular(10),
+                        boxShadow: hasCount
+                            ? [
+                                BoxShadow(
+                                    color: color.withOpacity(0.4),
+                                    blurRadius: 6)
+                              ]
+                            : null),
+                    child: Text('$count',
+                        style: const TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white)),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(width: 10),
+            Flexible(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(label,
+                      style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: hasCount
+                              ? AppColors.textPrimary
+                              : AppColors.textMuted),
+                      overflow: TextOverflow.ellipsis),
+                  const SizedBox(height: 2),
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 250),
+                    child: hasCount
+                        ? Row(
+                            key: const ValueKey('has'),
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                                Icon(Icons.check_circle_rounded,
+                                    color: color, size: 11),
+                                const SizedBox(width: 3),
+                                Text('$count adet',
+                                    style: TextStyle(
+                                        fontSize: 11,
+                                        color: color,
+                                        fontWeight: FontWeight.w700))
+                              ])
+                        : Row(
+                            key: const ValueKey('buy'),
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                                const Icon(Icons.monetization_on_rounded,
+                                    color: AppColors.gold, size: 11),
+                                const SizedBox(width: 3),
+                                const Text('50 coin',
+                                    style: TextStyle(
+                                        fontSize: 11,
+                                        color: AppColors.gold,
+                                        fontWeight: FontWeight.w700))
+                              ]),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// TOP STAT
+// ──────────────────────────────────────────────────────────────────────────────
+
+class _TopStat extends StatelessWidget {
+  final String label, value;
+  final IconData icon;
+  final Color color;
+
+  const _TopStat(
+      {required this.label,
+      required this.value,
+      required this.icon,
+      required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(mainAxisSize: MainAxisSize.min, children: [
+          Icon(icon, color: color, size: 13),
+          const SizedBox(width: 4),
+          Text(label.toUpperCase(),
+              style: AppTextStyles.labelSmall
+                  .copyWith(color: AppColors.textMuted, fontSize: 9))
+        ]),
+        const SizedBox(height: 2),
+        Text(value,
+            style: TextStyle(
+                fontSize: 15, fontWeight: FontWeight.w800, color: color)),
+      ],
+    );
+  }
+}
